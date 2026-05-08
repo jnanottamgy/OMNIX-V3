@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "last_updated": "2026-05-08T20:39:04.477514",
+  "behavioral_patterns": {
+    "sleep_quality_trend": "consistently_low",
+    "breakfast_habit": "skips_when_late",
+    "productivity_peak_hours": [
+      "19:00",
+      "22:00"
+    ],
+    "gym_skip_triggers": [
+      "poor_sleep",
+      "exam_day"
+    ],
+    "preferred_task_batching": "evening",
+    "avg_sleep_hours": 5.8
+  },
+  "academic_profile": {
+    "weak_subjects": [
+      "mathematics",
+      "physics"
+    ],
+    "strong_subjects": [
+      "computer_science",
+      "algorithms"
+    ],
+    "exam_anxiety_score": 0.72,
+    "revision_style": "spaced_repetition",
+    "current_semester": 5,
+    "institution": "MSRIT"
+  },
+  "action_history": [
+    {
+      "date": "2025-01-15",
+      "action": "focus_mode",
+      "trigger": "Exam day + high stress + morning = focus mode activated. Silencing non-critical ",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "reschedule",
+      "trigger": "Cancelling gym: sleep score 42/100 + exam in less than 2 hours. Memory confirms ",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "food_order",
+      "trigger": "Breakfast skipped. Energy at 35%. High stress detected. Ordering high_protein fu",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "reminder",
+      "trigger": "Hydration sensor shows LOW. Dehydration impairs cognitive performance by up to 1",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "study_plan",
+      "trigger": "Exam in 68 mins. Memory shows mathematics is a weak area. Spaced-repetition revi",
+      "outcome": "executed",
+      "execution_path": "unknown",
+      "latency_ms": 0
+    },
+    {
+      "date": "2025-01-15",
+      "action": "message",
+      "trigger": "Study group asked if you're coming at 09:30. With gym cancelled and exam prep on",
+      "outcome": "executed",
+      "execution_path": "unknown",
+      "latency_ms": 0
+    },
+    {
+      "date": "2025-01-15",
+      "action": "reminder",
+      "trigger": "Sleep score 42/100 detected. Memory confirms low sleep correlates with higher ex",
+      "outcome": "executed",
+      "execution_path": "unknown",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "focus_mode",
+      "trigger": "Exam day + high stress + morning = focus mode activated. Silencing non-critical ",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "reschedule",
+      "trigger": "Cancelling gym: sleep score 42/100 + exam in less than 2 hours. Memory confirms ",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "food_order",
+      "trigger": "Breakfast skipped. Energy at 35%. High stress detected. Ordering high_protein fu",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "reminder",
+      "trigger": "Hydration sensor shows LOW. Dehydration impairs cognitive performance by up to 1",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "study_plan",
+      "trigger": "Exam in 68 mins. Memory shows mathematics is a weak area. Spaced-repetition revi",
+      "outcome": "executed",
+      "execution_path": "unknown",
+      "latency_ms": 0
+    },
+    {
+      "date": "2025-01-15",
+      "action": "message",
+      "trigger": "Study group asked if you're coming at 09:30. With gym cancelled and exam prep on",
+      "outcome": "executed",
+      "execution_path": "unknown",
+      "latency_ms": 0
+    },
+    {
+      "date": "2025-01-15",
+      "action": "reminder",
+      "trigger": "Sleep score 42/100 detected. Memory confirms low sleep correlates with higher ex",
+      "outcome": "executed",
+      "execution_path": "unknown",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "reschedule",
+      "trigger": "Cancelling gym: sleep score 42/100 + exam in less than 2 hours. Memory confirms ",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "reminder",
+      "trigger": "Hydration sensor shows LOW. Dehydration impairs cognitive performance by up to 1",
+      "outcome": "executed",
+      "execution_path": "edge",
+      "latency_ms": 12
+    },
+    {
+      "date": "2025-01-15",
+      "action": "message",
+      "trigger": "Study group asked if you're coming at 09:30. With gym cancelled and exam prep on",
+      "outcome": "executed",
+      "execution_path": "unknown",
+      "latency_ms": 3759
+    },
+    {
+      "date": "2025-01-15",
+      "action": "reminder",
+      "trigger": "Sleep score 42/100 detected. Memory confirms low sleep correlates with higher ex",
+      "outcome": "executed",
+      "execution_path": "unknown",
+      "latency_ms": 12
+    }
+  ],
+  "personalization": {
+    "communication_tone": "concise",
+    "notification_sensitivity": "low",
+    "preferred_food_type": "high_protein",
+    "name": "User"
+  },
+  "loop_count": 3
+}

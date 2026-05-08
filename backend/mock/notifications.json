@@ -1,0 +1,29 @@
+{
+  "unread_count": 7,
+  "notifications": [
+    {
+      "id": "n_001",
+      "app": "WhatsApp",
+      "from": "Study Group",
+      "preview": "Hey you coming at 9:30 today?",
+      "timestamp": "08:51",
+      "priority": "MEDIUM"
+    },
+    {
+      "id": "n_002",
+      "app": "Gmail",
+      "from": "MSRIT Exam Portal",
+      "preview": "Reminder: Mathematics exam begins at 10:00 AM. Hall B.",
+      "timestamp": "07:00",
+      "priority": "HIGH"
+    },
+    {
+      "id": "n_003",
+      "app": "Notion",
+      "from": "System",
+      "preview": "DAA assignment due tomorrow — 3 tasks incomplete",
+      "timestamp": "08:00",
+      "priority": "MEDIUM"
+    }
+  ]
+}

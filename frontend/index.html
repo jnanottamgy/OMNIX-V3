@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OMNIX — Autonomous Life OS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+:root{
+  --bg:#07080D;--surface:#0D0F18;--card:#121520;--card2:#181C2A;
+  --border:#1A1E2E;--border2:#252A3F;
+  --cyan:#00E5FF;--cyan-g:#00E5FF18;--cyan-s:#00E5FF10;
+  --violet:#8B5CF6;--violet-g:#8B5CF618;
+  --green:#10B981;--green-g:#10B98118;
+  --amber:#F59E0B;--amber-g:#F59E0B18;
+  --red:#EF4444;--red-g:#EF444418;
+  --pink:#EC4899;--pink-g:#EC489918;
+  --text:#F1F5F9;--text2:#94A3B8;--text3:#475569;--text4:#1E2A3A;
+  --font:'Outfit',sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:8px;--r2:14px;--r3:20px;--r4:28px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+/* Ambient blobs */
+.blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0;animation:blob 14s ease-in-out infinite alternate}
+.blob-1{width:700px;height:700px;background:radial-gradient(circle,#8B5CF618 0%,transparent 70%);top:-200px;left:-200px}
+.blob-2{width:600px;height:600px;background:radial-gradient(circle,#00E5FF12 0%,transparent 70%);bottom:-150px;right:-150px;animation-delay:-7s}
+@keyframes blob{from{transform:translate(0,0) scale(1)}to{transform:translate(30px,20px) scale(1.08)}}
+
+.view{display:none;min-height:100vh;position:relative;z-index:1}
+.view.active{display:flex}
+
+/* ── AUTH ── */
+#view-auth{align-items:center;justify-content:center;padding:20px}
+.auth-wrap{width:100%;max-width:420px}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r4);padding:44px 40px;box-shadow:0 0 80px #8B5CF615}
+.auth-logo{text-align:center;margin-bottom:36px}
+.auth-logo-name{font-size:38px;font-weight:900;letter-spacing:-1px}
+.auth-logo-name span{color:var(--cyan)}
+.auth-logo-tag{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:3px;text-transform:uppercase;margin-top:4px}
+.auth-tabs{display:flex;background:var(--card);border-radius:var(--r);padding:4px;gap:4px;margin-bottom:28px}
+.auth-tab{flex:1;padding:10px;border:none;border-radius:6px;background:transparent;color:var(--text3);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.auth-tab.active{background:var(--border2);color:var(--text)}
+.err-box{background:var(--red-g);border:1px solid var(--red);border-radius:var(--r);padding:12px 16px;color:var(--red);font-size:13px;margin-bottom:16px;display:none}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--text2);margin-bottom:7px}
+.field input,.field select,.field textarea{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:12px 15px;color:var(--text);font-family:var(--font);font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-s)}
+.field input::placeholder,.field textarea::placeholder{color:var(--text3)}
+.field select{cursor:pointer}
+.btn-main{width:100%;padding:14px;background:var(--cyan);color:#000;border:none;border-radius:var(--r);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}
+.btn-main:hover{background:#33EAFF;box-shadow:0 0 24px #00E5FF40;transform:translateY(-1px)}
+.btn-main:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ── ONBOARDING ── */
+#view-onboarding{align-items:center;justify-content:center;padding:40px 20px;flex-direction:column}
+.ob-shell{width:100%;max-width:660px}
+.ob-steps{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:32px}
+.ob-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all .3s}
+.ob-dot.active{width:28px;border-radius:4px;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+.ob-dot.done{background:var(--green)}
+.ob-hd{text-align:center;margin-bottom:32px}
+.ob-title{font-size:30px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+.ob-title span{color:var(--cyan)}
+.ob-sub{font-size:15px;color:var(--text2);line-height:1.6}
+.ob-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r4);padding:32px;margin-bottom:16px}
+.ob-section{font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.ob-section::after{content:'';flex:1;height:1px;background:var(--border)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{padding:8px 15px;border-radius:100px;border:1.5px solid var(--border2);background:var(--card);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;user-select:none}
+.chip:hover{border-color:var(--cyan);color:var(--cyan)}
+.chip.on{background:var(--cyan-s);border-color:var(--cyan);color:var(--cyan)}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;background:var(--border2);border-radius:4px;outline:none;cursor:pointer;margin-top:8px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px #00E5FF40;cursor:pointer}
+.range-val{font-family:var(--mono);font-size:12px;color:var(--cyan);text-align:center;margin-top:5px}
+.ob-nav{display:flex;gap:12px}
+.btn-back{flex-shrink:0;padding:14px 22px;background:transparent;border:1.5px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-back:hover{border-color:var(--text2);color:var(--text)}
+.btn-next{flex:1;padding:14px;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#fff;border:none;border-radius:var(--r);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px #8B5CF625}
+.btn-next:hover{box-shadow:0 4px 30px #8B5CF640;transform:translateY(-1px)}
+
+/* ── DASHBOARD SHELL ── */
+#view-dashboard{flex-direction:row}
+.sidebar{width:252px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto}
+.sb-brand{padding:24px 20px 18px;border-bottom:1px solid var(--border)}
+.sb-logo{font-size:22px;font-weight:900;letter-spacing:-.5px}
+.sb-logo span{color:var(--cyan)}
+.sb-tagline{font-size:11px;color:var(--text3);margin-top:2px}
+.sb-user{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px}
+.sb-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--violet));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-role{font-size:11px;color:var(--text3)}
+.sb-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px}
+.nav-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;padding:8px 10px 4px;margin-top:6px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left;transition:all .15s}
+.nav-btn:hover{background:var(--card);color:var(--text)}
+.nav-btn.active{background:var(--cyan-s);color:var(--cyan);font-weight:600}
+.nav-icon{font-size:17px;flex-shrink:0}
+.sb-bottom{padding:12px 10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
+
+/* Integration pills in sidebar */
+.int-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--r);font-size:12px;color:var(--text3)}
+.int-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);flex-shrink:0}
+.int-dot.connected{background:var(--green);box-shadow:0 0 5px var(--green)}
+
+/* ── MAIN CONTENT ── */
+.main{flex:1;overflow-y:auto;padding:28px 32px;min-width:0}
+
+/* Page header */
+.page-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;gap:16px}
+.page-title{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.page-title span{color:var(--cyan)}
+.page-sub{font-size:13px;color:var(--text2);margin-top:3px}
+
+/* Screens */
+.screen{display:none}
+.screen.active{display:block}
+
+/* Panels */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);overflow:hidden}
+.phd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.phd-title{font-size:13px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:8px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.4)}}
+.pbd{padding:20px}
+
+/* Stats grid */
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px;position:relative;overflow:hidden;transition:border-color .2s}
+.stat-card:hover{border-color:var(--border2)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--c,var(--cyan));border-radius:var(--r2) var(--r2) 0 0}
+.stat-card.g{--c:var(--green)}.stat-card.v{--c:var(--violet)}.stat-card.a{--c:var(--amber)}.stat-card.r{--c:var(--red)}.stat-card.p{--c:var(--pink)}
+.s-icon{font-size:22px;margin-bottom:8px}
+.s-val{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:3px}
+.s-lbl{font-size:12px;color:var(--text3);font-weight:500}
+.s-chg{font-size:11px;font-family:var(--mono);margin-top:6px}
+.s-chg.up{color:var(--green)}.s-chg.dn{color:var(--red)}.s-chg.nu{color:var(--text3)}
+
+/* 2-col grid */
+.g2-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+
+/* Timeline */
+.tl{display:flex;flex-direction:column}
+.tl-item{display:flex;gap:14px;padding-bottom:16px}
+.tl-item:last-child{padding-bottom:0}
+.tl-left{flex-shrink:0;width:46px;display:flex;flex-direction:column;align-items:center}
+.tl-time{font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:6px;white-space:nowrap}
+.tl-dot{width:11px;height:11px;border-radius:50%;background:var(--border2);flex-shrink:0}
+.tl-dot.c{background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
+.tl-dot.v{background:var(--violet);box-shadow:0 0 7px var(--violet)}
+.tl-dot.g{background:var(--green);box-shadow:0 0 7px var(--green)}
+.tl-dot.a{background:var(--amber)}
+.tl-dot.now{width:15px;height:15px;background:var(--cyan);animation:pulse 1.5s infinite;box-shadow:0 0 12px var(--cyan)}
+.tl-line{width:2px;flex:1;background:var(--border);margin-top:3px;min-height:20px}
+.tl-content{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;cursor:pointer;transition:border-color .2s}
+.tl-content:hover{border-color:var(--border2)}
+.tl-content.now{border-color:var(--cyan);background:var(--cyan-s)}
+.tl-ttl{font-size:13px;font-weight:600;margin-bottom:2px}
+.tl-meta{font-size:11px;color:var(--text3)}
+.tl-tag{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:5px;font-family:var(--mono);text-transform:uppercase}
+.tl-tag.focus{background:var(--cyan-s);color:var(--cyan)}
+.tl-tag.health{background:var(--amber-g);color:var(--amber)}
+.tl-tag.work{background:var(--violet-g);color:var(--violet)}
+.tl-tag.rest{background:var(--green-g);color:var(--green)}
+.tl-tag.learn{background:var(--cyan-s);color:var(--cyan)}
+.tl-tag.deep{background:var(--violet-g);color:var(--violet)}
+.tl-tag.social{background:var(--pink-g);color:var(--pink)}
+
+/* Insight cards */
+.insight-list{display:flex;flex-direction:column;gap:10px}
+.insight{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:14px;display:flex;gap:12px;transition:border-color .2s}
+.insight:hover{border-color:var(--border2)}
+.i-icon{width:40px;height:40px;border-radius:var(--r);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.i-body{flex:1}
+.i-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.i-text{font-size:12px;color:var(--text2);line-height:1.6}
+.i-action{font-size:11px;font-weight:600;color:var(--cyan);margin-top:6px;cursor:pointer}
+.i-action:hover{text-decoration:underline}
+
+/* Stress bar */
+.stress-bar-wrap{margin:16px 0}
+.stress-bar-track{height:10px;background:var(--border2);border-radius:5px;overflow:hidden;margin:8px 0}
+.stress-bar-fill{height:100%;border-radius:5px;transition:width .8s ease}
+.stress-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--text3)}
+.signal-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.signal-row:last-child{border-bottom:none;padding-bottom:0}
+
+/* Twin simulation cards */
+.sim-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-bottom:10px}
+.sim-decision{font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.sim-prob{display:flex;align-items:baseline;gap:6px;margin-bottom:6px}
+.sim-prob-val{font-size:28px;font-weight:800;color:var(--cyan)}
+.sim-prob-lbl{font-size:12px;color:var(--text3)}
+.sim-rec{font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;display:inline-block;margin-bottom:8px}
+.sim-rec.PROCEED{background:var(--green-g);color:var(--green)}
+.sim-rec.AVOID,.sim-rec.DEFER,.sim-rec.RESIST{background:var(--red-g);color:var(--red)}
+.sim-rec.APPROVED{background:var(--green-g);color:var(--green)}
+.sim-reasoning{font-size:12px;color:var(--text2);line-height:1.6}
+.sim-alt{font-size:11px;color:var(--cyan);margin-top:6px;font-style:italic}
+
+/* Ask OMNIX */
+.ask-box{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r4);padding:24px;margin-bottom:20px;transition:border-color .3s}
+.ask-box:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-s)}
+.ask-label{font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.blink{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:blink-anim 1.2s step-end infinite;box-shadow:0 0 5px var(--cyan)}
+@keyframes blink-anim{0%,100%{opacity:1}50%{opacity:0}}
+.big-ta{width:100%;background:none;border:none;color:var(--text);font-family:var(--font);font-size:17px;outline:none;resize:none;line-height:1.7;min-height:110px}
+.big-ta::placeholder{color:var(--text3)}
+.ask-footer{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.quick-chips{display:flex;gap:7px;flex-wrap:wrap}
+.qchip{padding:6px 13px;background:var(--card);border:1px solid var(--border2);border-radius:100px;font-size:12px;color:var(--text3);cursor:pointer;transition:all .15s}
+.qchip:hover{border-color:var(--cyan);color:var(--cyan)}
+.gen-btn{display:flex;align-items:center;gap:8px;padding:12px 24px;background:linear-gradient(135deg,var(--cyan),var(--violet));color:#fff;border:none;border-radius:var(--r2);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px #8B5CF625;white-space:nowrap}
+.gen-btn:hover{box-shadow:0 4px 30px #8B5CF640;transform:translateY(-1px)}
+.gen-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* Generating overlay */
+.gen-overlay{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:44px 32px;text-align:center;display:none}
+.gen-overlay.active{display:block}
+.spinner{width:48px;height:48px;border:3px solid var(--border2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gen-steps-list{display:flex;flex-direction:column;gap:7px;margin-top:20px;text-align:left;max-width:320px;margin-left:auto;margin-right:auto}
+.gs{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;color:var(--text3);opacity:.4;transition:opacity .3s}
+.gs.active{opacity:1;color:var(--cyan)}
+.gs.done{opacity:.7;color:var(--green)}
+
+/* Schedule blocks */
+.sched-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.sched-title{font-size:21px;font-weight:800;letter-spacing:-.5px}
+.sched-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);overflow:hidden;margin-bottom:10px;transition:border-color .2s}
+.sched-block:hover{border-color:var(--border2)}
+.sb-hd{display:flex;align-items:center;gap:14px;padding:15px 18px;cursor:pointer}
+.sb-time{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px 9px;white-space:nowrap;flex-shrink:0}
+.sb-emoji{font-size:20px;flex-shrink:0}
+.sb-info{flex:1}
+.sb-title{font-size:14px;font-weight:600;margin-bottom:2px}
+.sb-meta{font-size:11px;color:var(--text3)}
+.sb-cat{font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;font-family:var(--mono);flex-shrink:0;text-transform:uppercase}
+.sb-cat.focus{background:var(--cyan-s);color:var(--cyan)}
+.sb-cat.health{background:var(--amber-g);color:var(--amber)}
+.sb-cat.work{background:var(--violet-g);color:var(--violet)}
+.sb-cat.rest{background:var(--green-g);color:var(--green)}
+.sb-cat.learn{background:var(--cyan-s);color:var(--cyan)}
+.sb-cat.deep{background:var(--violet-g);color:var(--violet)}
+.sb-cat.social{background:var(--pink-g);color:var(--pink)}
+.sb-body{padding:0 18px 16px;display:none;border-top:1px solid var(--border)}
+.sb-body.open{display:block;padding-top:14px}
+.sb-tasks{display:flex;flex-direction:column;gap:7px;margin-bottom:12px}
+.sb-task{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)}
+.sb-task::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--cyan);flex-shrink:0}
+.ai-box{background:var(--violet-g);border:1px solid var(--violet);border-radius:var(--r);padding:11px 14px;font-size:12px;color:var(--text2);line-height:1.6}
+.ai-box strong{color:var(--violet);font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px}
+
+/* Health check-in */
+.checkin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.mood-row{display:flex;gap:10px;margin-top:6px}
+.mood-opt{flex:1;padding:10px;border:1.5px solid var(--border);border-radius:var(--r);text-align:center;cursor:pointer;font-size:20px;transition:all .2s}
+.mood-opt:hover{border-color:var(--cyan)}
+.mood-opt.on{border-color:var(--cyan);background:var(--cyan-s)}
+.submit-checkin{width:100%;padding:14px;background:var(--green);color:#000;border:none;border-radius:var(--r);font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}
+.submit-checkin:hover{background:#34D399;transform:translateY(-1px)}
+
+/* Integrations screen */
+.int-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:24px;margin-bottom:16px}
+.int-card-hd{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.int-logo{width:48px;height:48px;border-radius:var(--r2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.int-logo.google{background:linear-gradient(135deg,#4285F4,#34A853)}
+.int-logo.strava{background:linear-gradient(135deg,#FC4C02,#ff6b35)}
+.int-logo.health{background:linear-gradient(135deg,var(--red),#ff6b6b)}
+.int-name{font-size:16px;font-weight:700}
+.int-desc{font-size:13px;color:var(--text2);margin-top:2px}
+.connect-btn{padding:10px 22px;border:1.5px solid var(--cyan);border-radius:var(--r);color:var(--cyan);background:var(--cyan-s);font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.connect-btn:hover{background:var(--cyan);color:#000}
+.connect-btn.connected{border-color:var(--green);color:var(--green);background:var(--green-g);cursor:default}
+.data-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.data-pill{background:var(--card);border:1px solid var(--border2);border-radius:100px;padding:5px 12px;font-size:12px;color:var(--text2)}
+.data-pill.live{border-color:var(--green);color:var(--green)}
+
+/* Priority filter */
+.notif-score-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.notif-score-row:last-child{border-bottom:none}
+.nscore{width:42px;height:42px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;font-family:var(--mono);flex-shrink:0}
+.nscore.HIGH,.nscore.CRITICAL{background:var(--cyan-s);color:var(--cyan)}
+.nscore.MEDIUM{background:var(--amber-g);color:var(--amber)}
+.nscore.LOW{background:var(--border2);color:var(--text3)}
+.nscore-title{font-size:13px;font-weight:600;flex:1}
+.nscore-from{font-size:11px;color:var(--text3)}
+.surface-badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;flex-shrink:0}
+.surface-badge.show{background:var(--green-g);color:var(--green)}
+.surface-badge.hide{background:var(--border2);color:var(--text3)}
+
+/* Recap */
+.recap-week-score{text-align:center;padding:32px;border-bottom:1px solid var(--border)}
+.recap-grade{font-size:80px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.recap-score-lbl{font-size:14px;color:var(--text2);margin-top:4px}
+.recap-summary{font-size:15px;color:var(--text);line-height:1.7;padding:20px 24px;border-bottom:1px solid var(--border)}
+.recap-days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;padding:20px}
+.recap-day{text-align:center}
+.recap-day-bar{height:60px;background:var(--border2);border-radius:4px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;margin-bottom:6px}
+.recap-day-fill{width:100%;border-radius:4px;background:linear-gradient(to top,var(--cyan),var(--violet));transition:height .8s ease}
+.recap-day-lbl{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.pattern-list{padding:20px;display:flex;flex-direction:column;gap:10px}
+.pat-item{display:flex;align-items:flex-start;gap:12px;padding:12px;background:var(--card);border-radius:var(--r2)}
+.pat-icon{font-size:20px;flex-shrink:0}
+.pat-text{font-size:13px;color:var(--text2);line-height:1.6}
+
+/* Settings */
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:22px;margin-bottom:16px}
+.ss-title{font-size:14px;font-weight:700;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.ss-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border)}
+.ss-row:last-child{border-bottom:none;padding-bottom:0}
+.ss-info{flex:1}
+.ss-lbl{font-size:14px;font-weight:500}
+.ss-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.toggle{width:46px;height:25px;background:var(--border2);border-radius:13px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--cyan)}
+.toggle::after{content:'';position:absolute;width:19px;height:19px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left .2s}
+.toggle.on::after{left:24px}
+.save-btn{padding:11px 22px;background:var(--cyan);color:#000;border:none;border-radius:var(--r);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px}
+.save-btn:hover{background:#33EAFF}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.5px;padding:3px 9px;border-radius:100px;text-transform:uppercase}
+.badge.c{background:var(--cyan-s);color:var(--cyan);border:1px solid var(--cyan)}
+.badge.g{background:var(--green-g);color:var(--green);border:1px solid var(--green)}
+.badge.v{background:var(--violet-g);color:var(--violet);border:1px solid var(--violet)}
+.badge.a{background:var(--amber-g);color:var(--amber);border:1px solid var(--amber)}
+.badge.r{background:var(--red-g);color:var(--red);border:1px solid var(--red)}
+
+/* Empty state */
+.empty{text-align:center;padding:50px 20px;color:var(--text3)}
+.empty-icon{font-size:44px;margin-bottom:10px}
+.empty-title{font-size:17px;font-weight:600;color:var(--text2);margin-bottom:6px}
+
+/* Small utility buttons */
+.btn-sm{padding:8px 16px;background:transparent;border:1.5px solid var(--border2);border-radius:var(--r);color:var(--text2);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-sm:hover{border-color:var(--cyan);color:var(--cyan)}
+.btn-sm.g:hover{border-color:var(--green);color:var(--green)}
+
+/* Toast */
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:9999}
+.toast-item{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r2);padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:t-in .3s ease;min-width:260px}
+@keyframes t-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.toast-item.success{border-left:4px solid var(--green)}
+.toast-item.error{border-left:4px solid var(--red)}
+.toast-item.info{border-left:4px solid var(--cyan)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+@media(max-width:768px){
+  .sidebar{display:none}.main{padding:16px}.stats4{grid-template-columns:1fr 1fr}.g2-grid{grid-template-columns:1fr}.checkin-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<!-- ════════════ AUTH ════════════ -->
+<div id="view-auth" class="view">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-name">OMN<span>IX</span></div>
+        <div class="auth-logo-tag">Autonomous Life OS</div>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="authTab('login')">Sign In</button>
+        <button class="auth-tab" onclick="authTab('signup')">Create Account</button>
+      </div>
+      <div class="err-box" id="auth-err"></div>
+      <div id="form-login">
+        <div class="field"><label>Email</label><input type="email" id="l-email" placeholder="you@example.com"/></div>
+        <div class="field"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+        <button class="btn-main" id="l-btn" onclick="doLogin()">Sign In to OMNIX</button>
+      </div>
+      <div id="form-signup" style="display:none">
+        <div class="field"><label>Full Name</label><input type="text" id="s-name" placeholder="Jnanottam"/></div>
+        <div class="field"><label>Email</label><input type="email" id="s-email" placeholder="you@example.com"/></div>
+        <div class="field"><label>Password</label><input type="password" id="s-pass" placeholder="Min 8 characters"/></div>
+        <button class="btn-main" id="s-btn" onclick="doSignup()">Create My Account</button>
+      </div>
+      <p style="text-align:center;margin-top:18px;font-size:12px;color:var(--text3)">Works without Supabase — Demo Mode available</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ ONBOARDING ════════════ -->
+<div id="view-onboarding" class="view" style="flex-direction:column;align-items:center;justify-content:center;padding:40px 20px">
+  <div class="ob-shell">
+    <div class="ob-steps"><div class="ob-dot active" id="od0"></div><div class="ob-dot" id="od1"></div><div class="ob-dot" id="od2"></div><div class="ob-dot" id="od3"></div></div>
+    <div class="ob-hd">
+      <div class="ob-title" id="ob-title">Tell OMNIX <span>who you are</span></div>
+      <div class="ob-sub" id="ob-sub">The more it knows, the smarter it gets. Be honest.</div>
+    </div>
+    <!-- Step 0 -->
+    <div class="ob-card" id="obs0">
+      <div class="ob-section">Identity</div>
+      <div class="g2"><div class="field"><label>First Name</label><input type="text" id="ob-name" placeholder="Jnanottam"/></div><div class="field"><label>Age</label><input type="number" id="ob-age" placeholder="20" min="13" max="90"/></div></div>
+      <div class="field"><label>City</label><input type="text" id="ob-city" placeholder="Bangalore, India"/></div>
+      <div class="field"><label>I am primarily a...</label><div class="chips"><div class="chip" data-g="role" data-v="student">🎓 Student</div><div class="chip" data-g="role" data-v="founder">🚀 Founder</div><div class="chip" data-g="role" data-v="professional">💼 Professional</div><div class="chip" data-g="role" data-v="freelancer">🎯 Freelancer</div><div class="chip" data-g="role" data-v="creator">🎨 Creator</div></div></div>
+    </div>
+    <!-- Step 1 -->
+    <div class="ob-card" id="obs1" style="display:none">
+      <div class="ob-section">Life Context</div>
+      <div class="field"><label>What are you working on right now?</label><textarea id="ob-ctx" placeholder="e.g. Final exams next week, building Praisr.ai, Nexus Finance Club event Friday..."></textarea></div>
+      <div class="field"><label>Biggest daily challenge</label><div class="chips"><div class="chip" data-g="ch" data-v="focus">😤 Focus</div><div class="chip" data-g="ch" data-v="time">⏰ Time</div><div class="chip" data-g="ch" data-v="energy">⚡ Energy</div><div class="chip" data-g="ch" data-v="balance">⚖️ Balance</div><div class="chip" data-g="ch" data-v="procrastination">😅 Procrastination</div></div></div>
+    </div>
+    <!-- Step 2 -->
+    <div class="ob-card" id="obs2" style="display:none">
+      <div class="ob-section">Health & Schedule</div>
+      <div class="g2">
+        <div class="field"><label>Average sleep hours</label><input type="range" id="ob-sleep" min="4" max="10" step="0.5" value="7" oninput="document.getElementById('ob-slv').textContent=this.value+'h'"/><div class="range-val" id="ob-slv">7h</div></div>
+        <div class="field"><label>Wake-up time</label><input type="time" id="ob-wake" value="07:00"/></div>
+      </div>
+      <div class="field"><label>Peak productivity</label><div class="chips"><div class="chip" data-g="peak" data-v="early_morning">🌅 Before 8am</div><div class="chip" data-g="peak" data-v="morning">☀️ Morning</div><div class="chip" data-g="peak" data-v="afternoon">🌤 Afternoon</div><div class="chip" data-g="peak" data-v="evening">🌆 Evening</div><div class="chip" data-g="peak" data-v="night">🌙 Night</div></div></div>
+      <div class="field"><label>Exercise habit</label><div class="chips"><div class="chip" data-g="ex" data-v="daily">Daily</div><div class="chip" data-g="ex" data-v="3-4x">3–4x/week</div><div class="chip" data-g="ex" data-v="1-2x">1–2x/week</div><div class="chip" data-g="ex" data-v="rarely">Rarely</div></div></div>
+    </div>
+    <!-- Step 3 -->
+    <div class="ob-card" id="obs3" style="display:none">
+      <div class="ob-section">Connect OMNIX</div>
+      <div class="field"><label>Backend URL</label><input type="text" id="ob-url" value="http://localhost:8000"/></div>
+      <div class="field"><label>Gemini API Key (optional)</label><input type="password" id="ob-gem" placeholder="AIza..."/><div style="font-size:11px;color:var(--text3);margin-top:5px">Free at aistudio.google.com — without it, OMNIX uses smart local fallback</div></div>
+      <div class="field"><label>Communication tone</label><div class="chips"><div class="chip" data-g="tone" data-v="direct">⚡ Direct</div><div class="chip" data-g="tone" data-v="friendly">😊 Friendly</div><div class="chip" data-g="tone" data-v="coach">💪 Coach</div><div class="chip" data-g="tone" data-v="minimal">🤫 Minimal</div></div></div>
+    </div>
+    <div class="ob-nav"><button class="btn-back" id="ob-bk" style="display:none" onclick="obPrev()">← Back</button><button class="btn-next" id="ob-nx" onclick="obNext()">Continue →</button></div>
+  </div>
+</div>
+
+<!-- ════════════ DASHBOARD ════════════ -->
+<div id="view-dashboard" class="view">
+  <aside class="sidebar">
+    <div class="sb-brand"><div class="sb-logo">OMN<span>IX</span></div><div class="sb-tagline">Autonomous Life OS</div></div>
+    <div class="sb-user"><div class="sb-avatar" id="sb-av">?</div><div><div class="sb-name" id="sb-nm">Loading...</div><div class="sb-role" id="sb-rl">—</div></div></div>
+    <nav class="sb-nav">
+      <div class="nav-label">Life Dashboard</div>
+      <button class="nav-btn active" onclick="go('today')"><span class="nav-icon">🏠</span> Today</button>
+      <button class="nav-btn" onclick="go('ask')"><span class="nav-icon">🧠</span> Ask OMNIX</button>
+      <button class="nav-btn" onclick="go('stress')"><span class="nav-icon">🌡</span> Stress Profile</button>
+      <button class="nav-btn" onclick="go('twin')"><span class="nav-icon">🪞</span> Digital Twin</button>
+      <button class="nav-btn" onclick="go('priority')"><span class="nav-icon">⚡</span> Priority Filter</button>
+      <button class="nav-btn" onclick="go('recap')"><span class="nav-icon">📊</span> Weekly Recap</button>
+      <div class="nav-label">System</div>
+      <button class="nav-btn" onclick="go('integrations')"><span class="nav-icon">🔗</span> Integrations</button>
+      <button class="nav-btn" onclick="go('checkin')"><span class="nav-icon">❤️</span> Morning Check-in</button>
+      <button class="nav-btn" onclick="go('settings')"><span class="nav-icon">⚙️</span> Settings</button>
+    </nav>
+    <div class="sb-bottom">
+      <div class="nav-label" style="margin-top:0">Connected</div>
+      <div class="int-row"><div class="int-dot" id="dot-google"></div> Google Calendar</div>
+      <div class="int-row"><div class="int-dot" id="dot-gmail"></div> Gmail</div>
+      <div class="int-row"><div class="int-dot" id="dot-health"></div> Health Check-in</div>
+      <button class="nav-btn" onclick="runLoop()" id="run-btn"><span class="nav-icon">▶</span> Run OMNIX</button>
+      <button class="nav-btn" onclick="doLogout()"><span class="nav-icon">🚪</span> Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- TODAY -->
+    <div class="screen active" id="screen-today">
+      <div class="page-hd">
+        <div><div class="page-title" id="greeting">Good morning ✨</div><div class="page-sub" id="today-date">—</div></div>
+        <button class="gen-btn" onclick="runLoop()"><span>▶</span> Run OMNIX</button>
+      </div>
+      <div class="stats4">
+        <div class="stat-card"><div class="s-icon">😴</div><div class="s-val" id="st-sleep" style="color:var(--cyan)">—</div><div class="s-lbl">Sleep Score</div><div class="s-chg nu" id="st-sleep-s">—</div></div>
+        <div class="stat-card g"><div class="s-icon">⚡</div><div class="s-val" id="st-energy" style="color:var(--green)">—</div><div class="s-lbl">Energy</div><div class="s-chg nu" id="st-energy-s">—</div></div>
+        <div class="stat-card v"><div class="s-icon">🌡</div><div class="s-val" id="st-stress" style="color:var(--violet)">—</div><div class="s-lbl">Stress Level</div><div class="s-chg nu" id="st-stress-s">—</div></div>
+        <div class="stat-card a"><div class="s-icon">🤖</div><div class="s-val" id="st-loops" style="color:var(--amber)">0</div><div class="s-lbl">OMNIX Loops</div><div class="s-chg up" id="st-loops-s">total runs</div></div>
+      </div>
+      <div class="g2-grid">
+        <div class="panel"><div class="phd"><div class="phd-title"><div class="live-dot"></div>Today's Schedule</div><span class="badge c" id="urgency-badge">—</span></div><div class="pbd"><div class="tl" id="today-tl"><div class="empty"><div class="empty-icon">📅</div><div class="empty-title">No schedule yet</div><p>Go to Ask OMNIX → generate your day</p></div></div></div></div>
+        <div class="panel"><div class="phd"><div class="phd-title">🧠 AI Insights</div><button class="btn-sm" onclick="runLoop()">Refresh</button></div><div class="pbd"><div class="insight-list" id="insights-container"><div class="empty"><div class="empty-icon">💡</div><div class="empty-title">Run OMNIX first</div></div></div></div></div>
+      </div>
+      <div class="panel" id="actions-panel" style="display:none"><div class="phd"><div class="phd-title">⚡ Last Loop — Actions</div><span class="badge g" id="actions-ct">0 actions</span></div><div class="pbd" id="actions-list"></div></div>
+    </div>
+
+    <!-- ASK OMNIX -->
+    <div class="screen" id="screen-ask">
+      <div class="page-hd"><div><div class="page-title">Ask <span>OMNIX</span></div><div class="page-sub">Type your day. Get your optimal schedule.</div></div></div>
+      <div class="ask-box">
+        <div class="ask-label"><div class="blink"></div>OMNIX — LISTENING</div>
+        <textarea class="big-ta" id="user-input" placeholder="Tell me what's happening today...&#10;e.g. Maths exam at 10am, slept 5 hours, gym at 9:30 might skip, study group 2pm, very stressed about the exam results"></textarea>
+        <div class="ask-footer">
+          <div class="quick-chips">
+            <div class="qchip" onclick="qi('Exam today at ')">⚡ Exam day</div>
+            <div class="qchip" onclick="qi('Busy workday, meetings at ')">💼 Work day</div>
+            <div class="qchip" onclick="qi('Low energy today, slept badly. Need to ')">😴 Low energy</div>
+            <div class="qchip" onclick="qi('Deadline crunch — must finish ')">🔥 Deadline</div>
+          </div>
+          <button class="gen-btn" id="gen-btn" onclick="genSchedule()"><span>🧠</span> Generate My Day</button>
+        </div>
+      </div>
+      <div class="gen-overlay" id="gen-overlay">
+        <div class="spinner"></div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:6px">OMNIX is thinking...</div>
+        <div style="font-size:13px;color:var(--text2)">Analysing your context and building your optimal schedule</div>
+        <div class="gen-steps-list">
+          <div class="gs active" id="gs0">📡 Context Agent collecting signals...</div>
+          <div class="gs" id="gs1">💾 Memory Agent loading your patterns...</div>
+          <div class="gs" id="gs2">🌡 Stress Agent analysing today...</div>
+          <div class="gs" id="gs3">🧠 Planner reasoning over your day...</div>
+          <div class="gs" id="gs4">✅ Building your personalised schedule...</div>
+        </div>
+      </div>
+      <div id="schedule-out" style="display:none">
+        <div class="sched-hd">
+          <div><div class="sched-title" id="sched-title">Your Optimised Day</div><div style="font-size:12px;color:var(--text3);margin-top:3px" id="sched-meta"></div></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-sm" onclick="genSchedule()">🔄 Regenerate</button>
+            <button class="btn-sm g" onclick="saveToToday()">💾 Save to Today</button>
+          </div>
+        </div>
+        <div id="sched-blocks"></div>
+      </div>
+    </div>
+
+    <!-- STRESS PROFILE -->
+    <div class="screen" id="screen-stress">
+      <div class="page-hd"><div><div class="page-title">Stress <span>Profile</span></div><div class="page-sub">Real-time stress analysis from all connected sources.</div></div><button class="btn-sm" onclick="loadStress()">🔄 Refresh</button></div>
+      <div class="g2-grid">
+        <div class="panel"><div class="phd"><div class="phd-title">🌡 Current Stress Level</div></div><div class="pbd" id="stress-main"><div class="empty"><div class="empty-icon">🌡</div><div class="empty-title">Run OMNIX to analyse</div></div></div></div>
+        <div class="panel"><div class="phd"><div class="phd-title">📊 Signal Breakdown</div></div><div class="pbd" id="stress-signals"><div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No data yet</div></div></div></div>
+      </div>
+    </div>
+
+    <!-- DIGITAL TWIN -->
+    <div class="screen" id="screen-twin">
+      <div class="page-hd"><div><div class="page-title">Digital <span>Twin</span></div><div class="page-sub">Your behavioural model. OMNIX simulates decisions before taking them.</div></div><button class="btn-sm" onclick="loadTwin()">🔄 Refresh</button></div>
+      <div class="g2-grid">
+        <div class="panel"><div class="phd"><div class="phd-title">🪞 Your Behavioural Model</div></div><div class="pbd" id="twin-model"><div class="empty"><div class="empty-icon">🪞</div><div class="empty-title">Run OMNIX to build your twin</div></div></div></div>
+        <div class="panel"><div class="phd"><div class="phd-title">🎯 Today's Simulations</div></div><div class="pbd" id="twin-sims"><div class="empty"><div class="empty-icon">🎯</div><div class="empty-title">No simulations yet</div></div></div></div>
+      </div>
+      <div class="panel" style="margin-top:0"><div class="phd"><div class="phd-title">🔮 Try a Simulation</div></div><div class="pbd">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-sm" onclick="runSim('book_early_meeting')">📅 Book 7am meeting?</button>
+          <button class="btn-sm" onclick="runSim('skip_gym')">🏋️ Skip gym today?</button>
+          <button class="btn-sm" onclick="runSim('add_task')">➕ Add one more task?</button>
+          <button class="btn-sm" onclick="runSim('skip_breakfast')">🍳 Skip breakfast?</button>
+          <button class="btn-sm" onclick="runSim('schedule_exam_prep')">📚 Schedule exam prep?</button>
+        </div>
+        <div id="sim-result" style="margin-top:16px"></div>
+      </div></div>
+    </div>
+
+    <!-- PRIORITY FILTER -->
+    <div class="screen" id="screen-priority">
+      <div class="page-hd"><div><div class="page-title">Priority <span>Filter</span></div><div class="page-sub">Paste your notifications. OMNIX surfaces only what matters.</div></div></div>
+      <div class="panel" style="margin-bottom:16px"><div class="phd"><div class="phd-title">📱 Paste Your Notifications</div></div><div class="pbd">
+        <div style="margin-bottom:12px;font-size:13px;color:var(--text2)">Add notifications below and OMNIX will score every one and surface only the critical ones.</div>
+        <div id="notif-inputs" style="display:flex;flex-direction:column;gap:8px">
+          <div class="field" style="margin-bottom:0"><input type="text" class="notif-input" placeholder="e.g. URGENT: Exam hall change — admin@msrit.edu" style="width:100%"/></div>
+          <div class="field" style="margin-bottom:0"><input type="text" class="notif-input" placeholder="e.g. 50% off pizza — Zomato" style="width:100%"/></div>
+          <div class="field" style="margin-bottom:0"><input type="text" class="notif-input" placeholder="e.g. Instagram liked your post" style="width:100%"/></div>
+          <div class="field" style="margin-bottom:0"><input type="text" class="notif-input" placeholder="Add more..." style="width:100%"/></div>
+          <div class="field" style="margin-bottom:0"><input type="text" class="notif-input" placeholder="Add more..." style="width:100%"/></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px">
+          <button class="gen-btn" onclick="runPriorityFilter()" style="flex:0 0 auto">⚡ Filter Now</button>
+          <button class="btn-sm" onclick="addNotifInput()">+ Add more</button>
+        </div>
+      </div></div>
+      <div id="priority-results"></div>
+    </div>
+
+    <!-- WEEKLY RECAP -->
+    <div class="screen" id="screen-recap">
+      <div class="page-hd"><div><div class="page-title">Weekly <span>Recap</span></div><div class="page-sub">What you did, what you missed, what OMNIX noticed.</div></div><button class="btn-sm" onclick="loadRecap()">🔄 Refresh</button></div>
+      <div class="panel" id="recap-panel"><div class="empty" style="padding:60px"><div class="empty-icon">📊</div><div class="empty-title">Loading your recap...</div></div></div>
+    </div>
+
+    <!-- INTEGRATIONS -->
+    <div class="screen" id="screen-integrations">
+      <div class="page-hd"><div><div class="page-title">Real <span>Integrations</span></div><div class="page-sub">Connect your actual accounts. OMNIX works on real data, not mocks.</div></div></div>
+
+      <!-- Google -->
+      <div class="int-card">
+        <div class="int-card-hd">
+          <div class="int-logo google">🗓</div>
+          <div><div class="int-name">Google Calendar + Gmail</div><div class="int-desc">Real events, email load, sender patterns, stress signals from inbox</div></div>
+          <div style="margin-left:auto">
+            <button class="connect-btn" id="google-btn" onclick="connectGoogle()">Connect Google</button>
+          </div>
+        </div>
+        <div class="data-pills">
+          <div class="data-pill" id="cal-pill">📅 Calendar: not connected</div>
+          <div class="data-pill" id="gmail-pill">📧 Gmail: not connected</div>
+        </div>
+        <div style="margin-top:14px;font-size:12px;color:var(--text3);background:var(--card);border-radius:var(--r);padding:12px">
+          ⚠️ Requires: Google Cloud Console project with Calendar + Gmail API enabled.<br>
+          Set <strong style="color:var(--cyan)">GOOGLE_CLIENT_ID</strong> and <strong style="color:var(--cyan)">GOOGLE_CLIENT_SECRET</strong> in your backend <code>.env</code>.
+          <a href="https://console.cloud.google.com" target="_blank" style="color:var(--cyan);display:block;margin-top:6px">→ Open Google Cloud Console</a>
+        </div>
+      </div>
+
+      <!-- Strava -->
+      <div class="int-card">
+        <div class="int-card-hd">
+          <div class="int-logo strava">🏃</div>
+          <div><div class="int-name">Strava</div><div class="int-desc">Real workouts, runs, distance, heart rate, weekly activity</div></div>
+          <div style="margin-left:auto">
+            <button class="connect-btn" id="strava-btn" onclick="connectStrava()">Connect Strava</button>
+          </div>
+        </div>
+        <div class="data-pills">
+          <div class="data-pill">🏋️ Activities: not connected</div>
+          <div class="data-pill">❤️ Heart rate: not connected</div>
+        </div>
+        <div style="margin-top:14px;font-size:12px;color:var(--text3);background:var(--card);border-radius:var(--r);padding:12px">
+          Set <strong style="color:var(--cyan)">STRAVA_CLIENT_ID</strong> and <strong style="color:var(--cyan)">STRAVA_CLIENT_SECRET</strong> in backend <code>.env</code>.
+          <a href="https://www.strava.com/settings/api" target="_blank" style="color:var(--cyan);display:block;margin-top:6px">→ Create Strava App</a>
+        </div>
+      </div>
+
+      <!-- Health Check-in -->
+      <div class="int-card">
+        <div class="int-card-hd">
+          <div class="int-logo health">❤️</div>
+          <div><div class="int-name">Morning Health Check-in</div><div class="int-desc">30-second daily form replacing Apple/Samsung Health (which require native apps)</div></div>
+          <div style="margin-left:auto">
+            <button class="connect-btn connected" style="cursor:default">Always Available</button>
+          </div>
+        </div>
+        <div class="data-pills">
+          <div class="data-pill live" id="health-pill">❤️ Submit today's check-in</div>
+        </div>
+        <button class="btn-sm" style="margin-top:12px" onclick="go('checkin')">Open Health Check-in →</button>
+      </div>
+    </div>
+
+    <!-- MORNING CHECK-IN -->
+    <div class="screen" id="screen-checkin">
+      <div class="page-hd"><div><div class="page-title">Morning <span>Check-in</span></div><div class="page-sub">30 seconds. Real data powers everything OMNIX does today.</div></div></div>
+      <div class="panel">
+        <div class="phd"><div class="phd-title">❤️ How are you today?</div><span id="checkin-status" class="badge c" style="display:none">Submitted</span></div>
+        <div class="pbd">
+          <div style="margin-bottom:16px">
+            <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px">How's your mood?</div>
+            <div class="mood-row">
+              <div class="mood-opt" data-m="great" onclick="setMood(this)">😄</div>
+              <div class="mood-opt" data-m="good" onclick="setMood(this)">🙂</div>
+              <div class="mood-opt on" data-m="neutral" onclick="setMood(this)">😐</div>
+              <div class="mood-opt" data-m="low" onclick="setMood(this)">😔</div>
+              <div class="mood-opt" data-m="terrible" onclick="setMood(this)">😩</div>
+            </div>
+          </div>
+          <div class="checkin-grid">
+            <div class="field"><label>Sleep Hours Last Night</label><input type="number" id="ci-sleep" placeholder="7" min="0" max="12" step="0.5" value="7"/></div>
+            <div class="field"><label>Sleep Quality (0-100)</label><input type="number" id="ci-quality" placeholder="70" min="0" max="100" value="70"/></div>
+            <div class="field"><label>Energy Level (0-100)</label><input type="number" id="ci-energy" placeholder="70" min="0" max="100" value="70"/></div>
+            <div class="field"><label>Steps So Far</label><input type="number" id="ci-steps" placeholder="0" min="0" value="0"/></div>
+          </div>
+          <div class="g2">
+            <div class="field"><label>Had Breakfast?</label>
+              <select id="ci-breakfast"><option value="true">✅ Yes</option><option value="false">❌ No</option></select>
+            </div>
+            <div class="field"><label>Hydration</label>
+              <select id="ci-hydration"><option value="GOOD">💧 Good</option><option value="OK">OK</option><option value="LOW">Low</option></select>
+            </div>
+          </div>
+          <div class="field"><label>Anything else OMNIX should know today?</label><textarea id="ci-notes" placeholder="e.g. headache, important deadline, feeling anxious about..." style="min-height:70px"></textarea></div>
+          <button class="submit-checkin" onclick="submitCheckin()">✅ Submit Check-in — Power Up OMNIX</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="screen" id="screen-settings">
+      <div class="page-hd"><div><div class="page-title">⚙️ Settings</div><div class="page-sub">Configure your OMNIX instance.</div></div></div>
+      <div class="settings-section">
+        <div class="ss-title">🔌 Connection</div>
+        <div class="field"><label>Backend URL</label><input type="text" id="set-url" value="http://localhost:8000"/></div>
+        <div class="field" style="margin-top:12px"><label>Gemini API Key</label><input type="password" id="set-gem" placeholder="AIza..."/></div>
+        <button class="save-btn" onclick="saveSettings()">Save Settings</button>
+      </div>
+      <div class="settings-section">
+        <div class="ss-title">🤖 Agent Behaviour</div>
+        <div class="ss-row"><div class="ss-info"><div class="ss-lbl">Auto-refresh every 60 min</div><div class="ss-sub">OMNIX runs autonomously in the background</div></div><div class="toggle" id="tg-auto" onclick="this.classList.toggle('on')"></div></div>
+        <div class="ss-row"><div class="ss-info"><div class="ss-lbl">Morning briefing</div><div class="ss-sub">Summary generated at your wake-up time</div></div><div class="toggle on" id="tg-brief" onclick="this.classList.toggle('on')"></div></div>
+        <div class="ss-row"><div class="ss-info"><div class="ss-lbl">Memory learning</div><div class="ss-sub">Update behavioural patterns after each loop</div></div><div class="toggle on" id="tg-learn" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="settings-section">
+        <div class="ss-title">🗑 Data</div>
+        <div class="ss-row"><div class="ss-info"><div class="ss-lbl">Reset OMNIX Memory</div><div class="ss-sub">Clear all patterns — cannot be undone</div></div><button onclick="resetMem()" style="padding:7px 14px;background:var(--red-g);border:1px solid var(--red);border-radius:var(--r);color:var(--red);font-size:12px;cursor:pointer;font-family:var(--font);font-weight:600">Reset</button></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────────────────
+const SB_URL  = 'YOUR_SUPABASE_URL';
+const SB_KEY  = 'YOUR_SUPABASE_ANON_KEY';
+
+let sb = null, demoMode = false;
+let S = { user:null, profile:null, backendUrl:'http://localhost:8000', geminiKey:'', scheduleBlocks:[], loopCount:0, lastLoop:null, currentMood:'neutral' };
+
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  S.backendUrl = localStorage.getItem('omnix_url') || 'http://localhost:8000';
+  S.geminiKey  = localStorage.getItem('omnix_gem') || '';
+
+  // Init Supabase
+  try {
+    if (SB_URL !== 'YOUR_SUPABASE_URL') {
+      sb = window.supabase.createClient(SB_URL, SB_KEY);
+      const { data:{ session } } = await sb.auth.getSession();
+      if (session) { S.user = session.user; await loadProfile(); return; }
+      sb.auth.onAuthStateChange(async (ev, sess) => {
+        if (ev === 'SIGNED_IN') { S.user = sess.user; await loadProfile(); }
+        else if (ev === 'SIGNED_OUT') { S.user=null; S.profile=null; showView('auth'); }
+      });
+    }
+  } catch(e) {}
+
+  // Demo mode
+  demoMode = true;
+  const stored = JSON.parse(localStorage.getItem('omnix_demo_user') || 'null');
+  if (stored) {
+    S.user = stored;
+    S.profile = JSON.parse(localStorage.getItem('omnix_demo_profile') || 'null');
+    if (S.profile) enterDash(); else showView('onboarding');
+  } else {
+    showView('auth');
+  }
+
+  // Check if returning from Google OAuth
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('google_connected') === 'true') {
+    toast('Google Calendar + Gmail connected!', 'success');
+    window.history.replaceState({}, '', window.location.pathname);
+    refreshIntegrationStatus();
+  }
+});
+
+// ── VIEW ─────────────────────────────────────────────────────────────────────
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => { el.classList.remove('active'); el.style.display='none'; });
+  const el = document.getElementById('view-'+v);
+  el.style.display='flex'; setTimeout(()=>el.classList.add('active'),10);
+}
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+function authTab(t) {
+  document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='signup')));
+  document.getElementById('form-login').style.display = t==='login'?'block':'none';
+  document.getElementById('form-signup').style.display = t==='signup'?'block':'none';
+  document.getElementById('auth-err').style.display='none';
+}
+function showErr(m){ const e=document.getElementById('auth-err'); e.textContent=m; e.style.display='block'; }
+
+async function doLogin() {
+  const email=document.getElementById('l-email').value.trim(), pw=document.getElementById('l-pass').value;
+  if(!email||!pw){ showErr('Fill all fields'); return; }
+  document.getElementById('l-btn').disabled=true;
+  if(demoMode) {
+    const u=JSON.parse(localStorage.getItem('omnix_demo_user')||'null');
+    if(u&&u.email===email){ S.user=u; S.profile=JSON.parse(localStorage.getItem('omnix_demo_profile')||'null'); document.getElementById('l-btn').disabled=false; if(S.profile) enterDash(); else showView('onboarding'); }
+    else { showErr('Account not found — create one first'); document.getElementById('l-btn').disabled=false; }
+    return;
+  }
+  const {error}=await sb.auth.signInWithPassword({email,password:pw});
+  document.getElementById('l-btn').disabled=false;
+  if(error) showErr(error.message);
+}
+
+async function doSignup() {
+  const name=document.getElementById('s-name').value.trim(), email=document.getElementById('s-email').value.trim(), pw=document.getElementById('s-pass').value;
+  if(!name||!email||!pw){ showErr('Fill all fields'); return; }
+  if(pw.length<8){ showErr('Password min 8 chars'); return; }
+  document.getElementById('s-btn').disabled=true;
+  if(demoMode){
+    const u={id:'demo-'+Date.now(), email, name};
+    localStorage.setItem('omnix_demo_user',JSON.stringify(u));
+    S.user=u; showView('onboarding'); document.getElementById('s-btn').disabled=false; return;
+  }
+  const {error}=await sb.auth.signUp({email,password:pw,options:{data:{full_name:name}}});
+  document.getElementById('s-btn').disabled=false;
+  if(error) showErr(error.message); else toast('Account created! Check email to confirm.','success');
+}
+
+async function doLogout() {
+  if(demoMode){ localStorage.removeItem('omnix_demo_user'); localStorage.removeItem('omnix_demo_profile'); S.user=S.profile=null; showView('auth'); return; }
+  await sb.auth.signOut();
+}
+
+// ── PROFILE ───────────────────────────────────────────────────────────────────
+async function loadProfile() {
+  if(demoMode){ S.profile=JSON.parse(localStorage.getItem('omnix_demo_profile')||'null'); if(S.profile) enterDash(); else showView('onboarding'); return; }
+  try {
+    const {data}=await sb.from('omnix_profiles').select('*').eq('user_id',S.user.id).single();
+    if(data){ S.profile=data; enterDash(); } else showView('onboarding');
+  } catch{ showView('onboarding'); }
+}
+
+async function saveProfile(p) {
+  if(demoMode){ localStorage.setItem('omnix_demo_profile',JSON.stringify(p)); S.profile=p; return; }
+  await sb.from('omnix_profiles').upsert({user_id:S.user.id,...p,updated_at:new Date().toISOString()});
+  S.profile=p;
+}
+
+// ── ONBOARDING ─────────────────────────────────────────────────────────────
+let obStep=0;
+const OB_TITLES = [
+  ['Tell OMNIX <span>who you are</span>','The more it knows, the smarter it gets.'],
+  ['Your <span>life right now</span>','What are you dealing with? Goals, projects, deadlines.'],
+  ['Your <span>body & schedule</span>','OMNIX optimises around your energy, not just your calendar.'],
+  ['Power up <span>OMNIX</span>','Last step. Connect and go.'],
+];
+
+document.addEventListener('click', e => {
+  if(e.target.classList.contains('chip')){
+    const g=e.target.dataset.g;
+    document.querySelectorAll(`.chip[data-g="${g}"]`).forEach(c=>c.classList.remove('on'));
+    e.target.classList.add('on');
+  }
+});
+
+function chipVal(g){ const s=document.querySelector(`.chip[data-g="${g}"].on`); return s?s.dataset.v:''; }
+
+function obNext(){
+  if(obStep<3){
+    document.getElementById('obs'+obStep).style.display='none';
+    document.getElementById('od'+obStep).classList.replace('active','done');
+    obStep++;
+    document.getElementById('obs'+obStep).style.display='block';
+    document.getElementById('od'+obStep).classList.add('active');
+    document.getElementById('ob-title').innerHTML=OB_TITLES[obStep][0];
+    document.getElementById('ob-sub').textContent=OB_TITLES[obStep][1];
+    document.getElementById('ob-bk').style.display='inline-flex';
+    if(obStep===3) document.getElementById('ob-nx').textContent='🚀 Launch OMNIX';
+  } else finishOb();
+}
+
+function obPrev(){
+  if(obStep>0){
+    document.getElementById('obs'+obStep).style.display='none';
+    document.getElementById('od'+obStep).className='ob-dot';
+    obStep--;
+    document.getElementById('obs'+obStep).style.display='block';
+    document.getElementById('od'+obStep).className='ob-dot active';
+    document.getElementById('ob-title').innerHTML=OB_TITLES[obStep][0];
+    document.getElementById('ob-sub').textContent=OB_TITLES[obStep][1];
+    document.getElementById('ob-nx').textContent='Continue →';
+    if(obStep===0) document.getElementById('ob-bk').style.display='none';
+  }
+}
+
+async function finishOb(){
+  const url=document.getElementById('ob-url').value.trim();
+  const gem=document.getElementById('ob-gem').value.trim();
+  if(url){ S.backendUrl=url; localStorage.setItem('omnix_url',url); }
+  if(gem){ S.geminiKey=gem; localStorage.setItem('omnix_gem',gem); }
+  const p={
+    name:document.getElementById('ob-name').value.trim()||'User',
+    age:document.getElementById('ob-age').value,
+    city:document.getElementById('ob-city').value.trim(),
+    role:chipVal('role')||'student',
+    context:document.getElementById('ob-ctx').value.trim(),
+    challenge:chipVal('ch')||'focus',
+    sleep_hours:document.getElementById('ob-sleep').value,
+    wakeup_time:document.getElementById('ob-wake').value,
+    peak_time:chipVal('peak')||'evening',
+    exercise:chipVal('ex')||'3-4x',
+    tone:chipVal('tone')||'direct',
+    onboarded:true, created_at:new Date().toISOString()
+  };
+  await saveProfile(p);
+  enterDash();
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────────────────────
+function enterDash(){
+  showView('dashboard');
+  const p=S.profile||{};
+  const name=(p.name||'User').split(' ')[0];
+  document.getElementById('sb-av').textContent=name[0].toUpperCase();
+  document.getElementById('sb-nm').textContent=p.name||'User';
+  document.getElementById('sb-rl').textContent=(p.role||'user');
+  const h=new Date().getHours();
+  document.getElementById('greeting').textContent=`${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, ${name} ✨`;
+  document.getElementById('today-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('set-url').value=S.backendUrl;
+  document.getElementById('set-gem').value=S.geminiKey;
+  refreshIntegrationStatus();
+  setTimeout(runLoop, 600);
+}
+
+// ── SCREEN SWITCHING ──────────────────────────────────────────────────────
+function go(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  const navMap={today:0,ask:1,stress:2,twin:3,priority:4,recap:5,integrations:6,checkin:7,settings:8};
+  const btns=document.querySelectorAll('.nav-btn');
+  if(navMap[name]!==undefined) btns[navMap[name]]?.classList.add('active');
+  if(name==='stress') loadStress();
+  if(name==='twin') loadTwin();
+  if(name==='recap') loadRecap();
+  if(name==='integrations') refreshIntegrationStatus();
+}
+
+// ── LOOP ──────────────────────────────────────────────────────────────────
+async function runLoop(){
+  document.getElementById('run-btn').disabled=true;
+  toast('Running OMNIX loop...','info');
+  try {
+    const r=await apiFetch('/run-loop','POST');
+    S.lastLoop=r; S.loopCount=r.memory_snapshot?.loop_count||S.loopCount+1;
+    updateStats(r);
+    renderInsights(r);
+    renderActionsPanel(r);
+    renderTodayTL();
+    document.getElementById('run-btn').disabled=false;
+    toast('OMNIX loop complete','success');
+  } catch(e) {
+    document.getElementById('run-btn').disabled=false;
+    const demo=buildDemoLoop();
+    S.lastLoop=demo; S.loopCount++;
+    updateStats(demo); renderInsights(demo); renderActionsPanel(demo);
+    toast('Demo mode — backend offline','info');
+  }
+}
+
+function buildDemoLoop(){
+  const p=S.profile||{};
+  const slp=parseFloat(p.sleep_hours||7);
+  const sc=Math.round((slp/10)*100);
+  return {
+    status:'COMPLETE', run_at:new Date().toISOString(), total_latency_ms:840,
+    context_snapshot:{sleep_score:sc,sleep_hours:slp,energy_estimate:sc>70?75:40,stress_level:sc>70?'MEDIUM':'HIGH',is_exam_day:(p.context||'').toLowerCase().includes('exam'),urgency:sc>70?'MEDIUM':'CRITICAL',breakfast_consumed:false},
+    memory_snapshot:{loop_count:S.loopCount+1,behavioral_patterns:{},action_history:[]},
+    stress_profile:{stress_score:sc>70?30:65,stress_level:sc>70?'MEDIUM':'HIGH',signals:{}},
+    executed_actions:[
+      {action_type:'focus_mode',provider:'edge',latency_ms:12,reasoning:'Exam day + high stress — enabling deep focus.',estimated_impact:'Reduces distractions 40%'},
+      {action_type:'reminder',provider:'edge',latency_ms:11,reasoning:'Hydration low — cognitive impact prevention.',estimated_impact:'10-13% performance boost'},
+    ],
+    stats:{total_actions:2,edge_count:2,cloud_count:0,planner_provider:'local-fallback'}
+  };
+}
+
+function updateStats(r){
+  const ctx=r?.context_snapshot||{};
+  const sp=r?.stress_profile||{};
+  document.getElementById('st-sleep').textContent=ctx.sleep_score!==undefined?ctx.sleep_score+'/100':'—';
+  document.getElementById('st-sleep-s').textContent=ctx.sleep_hours?ctx.sleep_hours+'h sleep':'—';
+  document.getElementById('st-energy').textContent=ctx.energy_estimate!==undefined?ctx.energy_estimate+'%':'—';
+  document.getElementById('st-energy-s').textContent=ctx.stress_level?'Stress: '+ctx.stress_level:'—';
+  document.getElementById('st-stress').textContent=sp.stress_level||ctx.urgency||'—';
+  document.getElementById('st-stress-s').textContent=sp.stress_score!==undefined?sp.stress_score+'/100':'—';
+  document.getElementById('st-loops').textContent=S.loopCount||'1';
+  document.getElementById('urgency-badge').textContent=ctx.urgency||'NORMAL';
+  document.getElementById('urgency-badge').className='badge '+(ctx.urgency==='CRITICAL'?'r':ctx.urgency==='HIGH'?'a':'c');
+}
+
+function renderInsights(r){
+  const ctx=r?.context_snapshot||{};
+  const sp=r?.stress_profile||{};
+  const p=S.profile||{};
+  const ins=[];
+  if(sp.stress_level==='HIGH'||sp.stress_level==='CRITICAL')
+    ins.push({icon:'🌡',title:`Stress level: ${sp.stress_level} (${sp.stress_score}/100)`,text:sp.recommendation||'High stress detected. OMNIX has adjusted your schedule.',action:'View stress profile →',screen:'stress'});
+  if(ctx.sleep_score<60)
+    ins.push({icon:'😴',title:'Sleep debt detected',text:`${ctx.sleep_hours}h sleep, score ${ctx.sleep_score}/100. OMNIX shifted heavy tasks to your ${p.peak_time||'evening'} peak window.`,action:null});
+  if(!ctx.breakfast_consumed)
+    ins.push({icon:'🍳',title:'Skipped breakfast',text:'Cognitive performance drops 20% without breakfast under stress. High-protein meal recommended now.',action:'Generate schedule →',screen:'ask'});
+  if(r?.twin_simulations?.length)
+    ins.push({icon:'🪞',title:`${r.twin_simulations.length} twin simulation(s) ran`,text:r.twin_simulations.map(s=>`${s.decision}: ${s.recommendation}`).join(' · '),action:'View digital twin →',screen:'twin'});
+  if(!ins.length)
+    ins.push({icon:'✅',title:"You're on track",text:'All systems green. OMNIX found no critical interventions needed.',action:null});
+
+  document.getElementById('insights-container').innerHTML=ins.map(i=>`
+    <div class="insight">
+      <div class="i-icon">${i.icon}</div>
+      <div class="i-body">
+        <div class="i-title">${i.title}</div>
+        <div class="i-text">${i.text}</div>
+        ${i.action?`<div class="i-action" onclick="go('${i.screen||'ask'}')">${i.action}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function renderActionsPanel(r){
+  const acts=r?.executed_actions||[];
+  if(!acts.length){ document.getElementById('actions-panel').style.display='none'; return; }
+  document.getElementById('actions-panel').style.display='block';
+  document.getElementById('actions-ct').textContent=acts.length+' actions';
+  document.getElementById('actions-list').innerHTML=acts.map(a=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;gap:14px;align-items:flex-start;margin-bottom:8px">
+      <span class="badge ${a.provider==='edge'?'g':'v'}" style="flex-shrink:0">${a.provider==='edge'?'⚡ Edge':'☁ Cloud'}</span>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text2);text-transform:uppercase;margin-bottom:3px">${a.action_type}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5">${a.reasoning}</div>
+      ${a.estimated_impact?`<div style="font-size:10px;color:var(--green);margin-top:4px;font-family:var(--mono)">↗ ${a.estimated_impact}</div>`:''}
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;color:var(--text3);flex-shrink:0">${a.latency_ms}ms</div>
+    </div>`).join('');
+}
+
+// ── SCHEDULE ─────────────────────────────────────────────────────────────
+function qi(t){ const ta=document.getElementById('user-input'); ta.value=t; ta.focus(); }
+
+async function genSchedule(){
+  const input=document.getElementById('user-input').value.trim();
+  if(!input){ toast('Tell me about your day first!','error'); return; }
+  document.getElementById('gen-overlay').style.display='block';
+  document.getElementById('schedule-out').style.display='none';
+  document.getElementById('gen-btn').disabled=true;
+  ['gs0','gs1','gs2','gs3','gs4'].forEach((id,i)=>setTimeout(()=>{
+    if(i>0) document.getElementById('gs'+(i-1)).className='gs done';
+    document.getElementById(id).className='gs active';
+  },i*700));
+
+  try{
+    const p=S.profile||{};
+    const resp=await apiFetch('/generate-schedule','POST',{user_input:input,profile:p,user_id:uid()});
+    S.scheduleBlocks=resp.schedule||[];
+    setTimeout(()=>{ document.getElementById('gen-overlay').style.display='none'; renderSchedule(S.scheduleBlocks,input,resp.provider); document.getElementById('gen-btn').disabled=false; },3600);
+  } catch(e){
+    const local=buildLocalSched(input);
+    S.scheduleBlocks=local;
+    setTimeout(()=>{ document.getElementById('gen-overlay').style.display='none'; renderSchedule(local,input,'local-optimizer'); document.getElementById('gen-btn').disabled=false; },3600);
+  }
+}
+
+function buildLocalSched(input){
+  const p=S.profile||{};
+  const lower=input.toLowerCase();
+  const wk=p.wakeup_time||'07:00';
+  const [wh,wm]=wk.split(':').map(Number);
+  const blocks=[];
+  const t=off=>{ const tot=wh*60+wm+off*30; return `${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`; };
+  blocks.push({time:t(0),title:'Morning Routine',emoji:'🌅',category:'health',duration:'30 min',location:'Home',reasoning:'Consistency in the first 30 minutes determines the day.',tasks:['500ml water immediately','5-min stretch','Review today\'s top 3']});
+  blocks.push({time:t(1),title:'Breakfast + Brain Fuel',emoji:'🍳',category:'health',duration:'20 min',location:'Home',reasoning:'High-protein breakfast sustains focus for 3-4 hours. Skipping it with stress cuts performance 20%.',tasks:['High-protein meal','Eat away from screens','Coffee after cortisol peak (90min post-wake)']});
+  if(lower.includes('exam')){
+    blocks.push({time:t(2),title:'Exam Prep — Spaced Repetition',emoji:'📚',category:'focus',duration:'75 min',location:'Desk',reasoning:'Spaced repetition outperforms re-reading by 50%. Focus on weak areas only — not what you already know.',tasks:['Formula sheet review (10min)','Weak topic practice problems (35min)','Past paper questions — high yield (25min)','Stop 5min before exam to calm down']});
+    blocks.push({time:t(5),title:'EXAM',emoji:'🎯',category:'deep',duration:'2 hrs',location:'Exam Hall',reasoning:'You\'ve prepared. Trust the work. Anxiety is excitement.',tasks:['Read ALL questions before writing','Easiest/highest-mark questions first','Time-box each section','Leave 10min for review']});
+  } else if(lower.includes('deadline')||lower.includes('submit')){
+    blocks.push({time:t(2),title:'Deep Work — Deadline Sprint',emoji:'🔥',category:'deep',duration:'90 min',location:'Desk',reasoning:'Single-task on the deliverable. Phone in another room.',tasks:['Open ONLY the files needed','45-min Pomodoro blocks','Target: submission-ready draft']});
+  } else {
+    blocks.push({time:t(2),title:'Deep Work Block',emoji:'💻',category:'focus',duration:'90 min',location:'Desk',reasoning:`Your ${p.peak_time||'evening'} is your peak — but morning focus sets the tone.`,tasks:['Most important task first','All notifications off','Track output, not time']});
+  }
+  blocks.push({time:t(7),title:'Lunch + Recovery',emoji:'🍱',category:'rest',duration:'45 min',location:'—',reasoning:'Mental recovery is performance maintenance. A 10-min walk cuts the post-lunch dip 40%.',tasks:['Eat away from desk','10-min walk after','No work thoughts','Hydrate 250ml']});
+  if(lower.includes('gym')&&!lower.includes('skip')){
+    blocks.push({time:t(10),title:'Gym / Training',emoji:'🏋️',category:'health',duration:'60 min',location:'Gym',reasoning:'Afternoon = peak body temp + testosterone. BDNF released post-workout boosts learning retention.',tasks:['5-min dynamic warm-up','Main training','Cool-down + protein within 45min']});
+  }
+  if(lower.includes('study group')){
+    blocks.push({time:t(12),title:'Study Group',emoji:'👥',category:'social',duration:'90 min',location:'Library',reasoning:'Teaching others improves your own retention 90% (Protégé effect). Come prepared to explain concepts.',tasks:['Prep 2-3 questions','Explain at least one concept','Leave on time — protect evening']});
+  }
+  blocks.push({time:t(14),title:'Second Work Block',emoji:'⚡',category:'focus',duration:'75 min',location:'Desk',reasoning:'Second wind. Second priority task. Output over perfection.',tasks:['Second most important task','Admin/email in last 15min only','Ship something']});
+  blocks.push({time:t(18),title:'Evening Review + Plan Tomorrow',emoji:'📋',category:'learn',duration:'20 min',location:'Home',reasoning:'3-min reflection consolidates the day. Pre-committing tomorrow\'s tasks reduces decision fatigue by 40%.',tasks:['3 things that went well','1 thing to improve','Set tomorrow\'s top 3 in OMNIX']});
+  const slp=parseFloat(p.sleep_hours||7);
+  blocks.push({time:t(20),title:`Sleep — ${slp}h Target`,emoji:'😴',category:'rest',duration:`${slp}h`,location:'Bedroom',reasoning:`Sleep consolidates everything learned today. Every hour under 7h costs 10% next-day performance.`,tasks:['No screens 30min before','Room 18-20°C','Tomorrow already planned — no rumination needed']});
+  return blocks;
+}
+
+function renderSchedule(blocks,input,provider){
+  document.getElementById('schedule-out').style.display='block';
+  document.getElementById('sched-title').textContent='Your Optimised Day';
+  document.getElementById('sched-meta').textContent=`"${input.substring(0,55)}${input.length>55?'...':''}" · ${blocks.length} blocks · ${provider}`;
+  document.getElementById('sched-blocks').innerHTML=blocks.map((b,i)=>`
+    <div class="sched-block">
+      <div class="sb-hd" onclick="toggleSB(${i})">
+        <div class="sb-time">${b.time}</div>
+        <div class="sb-emoji">${b.emoji||'📌'}</div>
+        <div class="sb-info"><div class="sb-title">${b.title}</div><div class="sb-meta">${b.duration||''}${b.location?' · '+b.location:''}</div></div>
+        <div class="sb-cat ${b.category}">${b.category}</div>
+        <div style="color:var(--text3);font-size:11px;margin-left:6px">▾</div>
+      </div>
+      <div class="sb-body" id="sbb${i}">
+        ${b.tasks?.length?`<div class="sb-tasks">${b.tasks.map(t=>`<div class="sb-task">${t}</div>`).join('')}</div>`:''}
+        <div class="ai-box"><strong>🧠 OMNIX Reasoning</strong>${b.reasoning||'Optimised based on your profile and context.'}</div>
+      </div>
+    </div>`).join('');
+
+  // Auto-open current block
+  const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
+  blocks.forEach((b,i)=>{ const [bh,bm]=(b.time||'00:00').split(':').map(Number); if(bh*60+bm<=nowM&&bh*60+bm+90>nowM) toggleSB(i); });
+  toast('Schedule generated! Tap any block for details.','success');
+}
+
+function toggleSB(i){ document.getElementById('sbb'+i).classList.toggle('open'); }
+
+function saveToToday(){
+  renderTodayTL();
+  toast('Schedule saved to Today!','success');
+  go('today');
+}
+
+function renderTodayTL(){
+  if(!S.scheduleBlocks.length) return;
+  const now=new Date(), nowM=now.getHours()*60+now.getMinutes();
+  const colorMap={focus:'c',work:'v',health:'a',rest:'g',learn:'c',deep:'v',social:'c'};
+  document.getElementById('today-tl').innerHTML=S.scheduleBlocks.slice(0,7).map((b,i,arr)=>{
+    const [bh,bm]=(b.time||'00:00').split(':').map(Number);
+    const bM=bh*60+bm, isCur=bM<=nowM&&bM+90>nowM, col=colorMap[b.category]||'c';
+    return `<div class="tl-item">
+      <div class="tl-left"><div class="tl-time">${b.time}</div><div class="tl-dot ${isCur?'now':col}"></div>${i<arr.length-1?'<div class="tl-line"></div>':''}</div>
+      <div class="tl-content${isCur?' now':''}"><div class="tl-ttl">${b.emoji||''} ${b.title}</div><div class="tl-meta">${b.duration}</div><div class="tl-tag ${b.category}">${b.category}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── STRESS ──────────────────────────────────────────────────────────────────
+async function loadStress(){
+  try{
+    const r=await apiFetch('/stress-profile?user_id='+uid());
+    renderStress(r);
+  } catch{
+    renderStress({stress_score:52,stress_level:'MEDIUM',recommendation:'Moderate stress. OMNIX will pace your schedule.',signals:{sleep_deficit:{label:'Sleep deficit',contribution:20},email_overload:{label:'18 unread emails',contribution:14},cortisol_curve:{label:'Time of day',contribution:8}}});
+  }
+}
+
+function renderStress(r){
+  const score=r.stress_score||0, level=r.stress_level||'—';
+  const col=level==='CRITICAL'?'var(--red)':level==='HIGH'?'var(--amber)':level==='MEDIUM'?'var(--violet)':'var(--green)';
+  document.getElementById('stress-main').innerHTML=`
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:60px;font-weight:900;color:${col};line-height:1">${score}</div>
+      <div style="font-size:14px;color:var(--text2);margin-top:4px">/ 100 — <strong style="color:${col}">${level}</strong></div>
+    </div>
+    <div class="stress-bar-wrap">
+      <div class="stress-bar-track"><div class="stress-bar-fill" style="width:${score}%;background:${col}"></div></div>
+      <div class="stress-labels"><span>Calm</span><span>Moderate</span><span>Critical</span></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-top:16px;font-size:13px;color:var(--text2);line-height:1.7">${r.recommendation||''}</div>`;
+  const sigs=r.signals||{};
+  document.getElementById('stress-signals').innerHTML=Object.entries(sigs).length?
+    Object.entries(sigs).map(([k,v])=>`<div class="signal-row"><div><div style="font-size:13px;font-weight:600">${v.label||k}</div></div><div style="font-family:var(--mono);font-size:12px;color:var(--amber)">+${v.contribution||0}</div></div>`).join('')
+    :'<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No signals yet</div></div>';
+}
+
+// ── DIGITAL TWIN ──────────────────────────────────────────────────────────
+async function loadTwin(){
+  try{
+    const r=await apiFetch('/twin-profile?user_id='+uid());
+    renderTwinModel(r.twin?.behavioral_model||{});
+    renderTwinSims(r.simulations||[]);
+  } catch{
+    renderTwinModel({gym_cancel_rate_pct:40,peak_focus_hour:19,avg_sleep_hours:6.2,breakfast_skip_rate_pct:60,early_meeting_cancel_pct:55});
+    renderTwinSims([]);
+  }
+}
+
+function renderTwinModel(bm){
+  if(!Object.keys(bm).length){ document.getElementById('twin-model').innerHTML='<div class="empty"><div class="empty-icon">🪞</div><div class="empty-title">Run OMNIX to build your twin</div></div>'; return; }
+  document.getElementById('twin-model').innerHTML=Object.entries(bm).map(([k,v])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;color:var(--text2)">${k.replace(/_/g,' ')}</div>
+      <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--cyan)">${typeof v==='number'&&v>1?v+(k.includes('rate')||k.includes('pct')?'%':''):v}</div>
+    </div>`).join('');
+}
+
+function renderTwinSims(sims){
+  if(!sims.length){ document.getElementById('twin-sims').innerHTML='<div class="empty"><div class="empty-icon">🎯</div><div class="empty-title">No simulations yet</div></div>'; return; }
+  document.getElementById('twin-sims').innerHTML=sims.map(s=>`
+    <div class="sim-card">
+      <div class="sim-decision">${s.decision?.replace(/_/g,' ')}</div>
+      <div class="sim-prob"><div class="sim-prob-val">${s.success_probability_pct}%</div><div class="sim-prob-lbl">success probability</div></div>
+      <div class="sim-rec ${s.recommendation}">${s.recommendation}</div>
+      <div class="sim-reasoning">${s.reasoning}</div>
+      ${s.alternative?`<div class="sim-alt">💡 ${s.alternative}</div>`:''}
+    </div>`).join('');
+}
+
+async function runSim(decision){
+  document.getElementById('sim-result').innerHTML='<div style="font-family:var(--mono);font-size:12px;color:var(--text3);padding:12px">Simulating...</div>';
+  try{
+    const r=await apiFetch('/simulate','POST',{decision,user_id:uid()});
+    document.getElementById('sim-result').innerHTML=`
+      <div class="sim-card">
+        <div class="sim-decision">${r.decision?.replace(/_/g,' ')}</div>
+        <div class="sim-prob"><div class="sim-prob-val">${r.success_probability_pct}%</div><div class="sim-prob-lbl">success probability</div></div>
+        <div class="sim-rec ${r.recommendation}">${r.recommendation}</div>
+        <div class="sim-reasoning">${r.reasoning}</div>
+        ${r.alternative?`<div class="sim-alt">💡 ${r.alternative}</div>`:''}
+        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:8px">Confidence: ${r.confidence||'—'}</div>
+      </div>`;
+  } catch(e){
+    document.getElementById('sim-result').innerHTML=`<div style="font-size:12px;color:var(--red)">Simulation failed — backend offline</div>`;
+  }
+}
+
+// ── PRIORITY FILTER ──────────────────────────────────────────────────────
+function addNotifInput(){
+  const wrap=document.getElementById('notif-inputs');
+  const div=document.createElement('div');
+  div.className='field'; div.style.marginBottom='0';
+  div.innerHTML='<input type="text" class="notif-input" placeholder="Add notification..." style="width:100%"/>';
+  wrap.appendChild(div);
+}
+
+async function runPriorityFilter(){
+  const inputs=[...document.querySelectorAll('.notif-input')].map(i=>i.value.trim()).filter(Boolean);
+  if(!inputs.length){ toast('Add at least one notification','error'); return; }
+  const notifications=inputs.map(t=>({title:t,from:t.includes('—')?t.split('—')[1]?.trim():'',app:'email'}));
+  try{
+    const r=await apiFetch('/priority-filter','POST',{notifications,user_id:uid()});
+    renderPriorityResults(r, notifications);
+  } catch{
+    // Local scoring fallback
+    const scored=notifications.map((n,i)=>({
+      ...n,
+      priority_score:n.title.toLowerCase().includes('urgent')||n.title.toLowerCase().includes('exam')?85:n.title.toLowerCase().includes('instagram')||n.title.toLowerCase().includes('pizza')||n.title.toLowerCase().includes('netflix')?15:50,
+      priority_level:n.title.toLowerCase().includes('urgent')?'CRITICAL':'LOW',
+      surface:n.title.toLowerCase().includes('urgent')||n.title.toLowerCase().includes('exam')
+    })).sort((a,b)=>b.priority_score-a.priority_score);
+    renderPriorityResults({surfaced:scored.filter(s=>s.surface),all_scored:scored,stats:{total:scored.length,surfaced:scored.filter(s=>s.surface).length,suppressed:scored.filter(s=>!s.surface).length,avg_score:60}},notifications);
+  }
+}
+
+function renderPriorityResults(r, orig){
+  const {surfaced=[],all_scored=[],stats={}}=r;
+  document.getElementById('priority-results').innerHTML=`
+    <div class="panel">
+      <div class="phd">
+        <div class="phd-title">📊 Results — ${stats.total} in → ${stats.surfaced} surfaced, ${stats.suppressed} suppressed</div>
+      </div>
+      <div class="pbd">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;text-align:center">
+          <div style="background:var(--card);border-radius:var(--r2);padding:14px"><div style="font-size:24px;font-weight:800;color:var(--green)">${stats.surfaced}</div><div style="font-size:11px;color:var(--text3)">Surfaced</div></div>
+          <div style="background:var(--card);border-radius:var(--r2);padding:14px"><div style="font-size:24px;font-weight:800;color:var(--red)">${stats.suppressed}</div><div style="font-size:11px;color:var(--text3)">Suppressed</div></div>
+          <div style="background:var(--card);border-radius:var(--r2);padding:14px"><div style="font-size:24px;font-weight:800;color:var(--cyan)">${stats.avg_score||0}</div><div style="font-size:11px;color:var(--text3)">Avg Score</div></div>
+        </div>
+        ${all_scored.map(n=>`
+          <div class="notif-score-row">
+            <div class="nscore ${n.priority_level}">${n.priority_score}</div>
+            <div style="flex:1"><div class="nscore-title">${n.title}</div><div class="nscore-from">${n.from||''}</div></div>
+            <span class="surface-badge ${n.surface?'show':'hide'}">${n.surface?'SURFACE':'FILTER'}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ── WEEKLY RECAP ──────────────────────────────────────────────────────────
+async function loadRecap(){
+  try{
+    const r=await apiFetch('/weekly-recap?user_id='+uid());
+    renderRecap(r);
+  } catch{
+    renderRecap({period:'This Week',week_score:72,grade:'B',summary_sentence:'This week: 2 focus sessions, 2 skipped workouts, most productive day was Wednesday. OMNIX ran '+S.loopCount+' loops.',headline_stats:{omnix_loops:S.loopCount,focus_sessions:2,gym_skips:2,messages_handled:1},days:[{day:'Mon',productivity_score:65},{day:'Tue',productivity_score:80},{day:'Wed',productivity_score:90},{day:'Thu',productivity_score:70},{day:'Fri',productivity_score:75},{day:'Sat',productivity_score:50},{day:'Sun',productivity_score:60}],patterns_noticed:[{icon:'🎯',text:'Focus mode helped on Tuesday and Wednesday'},{icon:'😴',text:'Sleep consistently under 7h — impacting energy'}],next_week_recommendations:['Set a 10:30pm sleep cutoff','Move gym to your peak hours']});
+  }
+}
+
+function renderRecap(r){
+  const days=r.days||[];
+  const maxScore=Math.max(...days.map(d=>d.productivity_score),1);
+  document.getElementById('recap-panel').innerHTML=`
+    <div class="recap-week-score">
+      <div class="recap-grade">${r.grade||'B'}</div>
+      <div style="font-size:28px;font-weight:800;color:var(--text);margin-top:4px">${r.week_score||0}/100</div>
+      <div class="recap-score-lbl">${r.period||'This Week'}</div>
+    </div>
+    <div class="recap-summary">${r.summary_sentence||''}</div>
+    <div class="recap-days">
+      ${days.map(d=>`
+        <div class="recap-day">
+          <div class="recap-day-bar"><div class="recap-day-fill" style="height:${(d.productivity_score/maxScore)*100}%"></div></div>
+          <div class="recap-day-lbl">${d.day}</div>
+        </div>`).join('')}
+    </div>
+    ${r.patterns_noticed?.length?`<div class="pattern-list">${r.patterns_noticed.map(p=>`<div class="pat-item"><div class="pat-icon">${p.icon}</div><div class="pat-text">${p.text}</div></div>`).join('')}</div>`:''}
+    ${r.next_week_recommendations?.length?`
+      <div style="padding:0 20px 20px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Next Week</div>
+        ${r.next_week_recommendations.map(rec=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:12px;margin-bottom:8px;font-size:13px;color:var(--text2)">→ ${rec}</div>`).join('')}
+      </div>`:''
+    }`;
+}
+
+// ── INTEGRATIONS ──────────────────────────────────────────────────────────
+async function refreshIntegrationStatus(){
+  try{
+    const r=await apiFetch('/integrations/status?user_id='+uid());
+    const gCon=r.google_calendar?.connected;
+    const hSub=r.health_checkin?.submitted_today;
+    document.getElementById('dot-google').className='int-dot'+(gCon?' connected':'');
+    document.getElementById('dot-gmail').className='int-dot'+(gCon?' connected':'');
+    document.getElementById('dot-health').className='int-dot'+(hSub?' connected':'');
+    if(gCon){
+      document.getElementById('google-btn').className='connect-btn connected';
+      document.getElementById('google-btn').textContent='✓ Connected';
+      document.getElementById('cal-pill').className='data-pill live';
+      document.getElementById('cal-pill').textContent='📅 '+r.google_calendar.event_count+' events today';
+      document.getElementById('gmail-pill').className='data-pill live';
+      document.getElementById('gmail-pill').textContent='📧 '+r.gmail.unread_count+' unread';
+    }
+    if(hSub){
+      document.getElementById('health-pill').className='data-pill live';
+      document.getElementById('health-pill').textContent='❤️ Check-in submitted today';
+    }
+  } catch{}
+}
+
+async function connectGoogle(){
+  try{
+    const r=await apiFetch('/integrations/google/auth-url?user_id='+uid());
+    window.location.href=r.auth_url;
+  } catch{ toast('Set GOOGLE_CLIENT_ID in backend .env first','error'); }
+}
+
+async function connectStrava(){
+  try{
+    const r=await apiFetch('/integrations/strava/auth-url');
+    window.location.href=r.auth_url;
+  } catch{ toast('Set STRAVA_CLIENT_ID in backend .env first','error'); }
+}
+
+// ── HEALTH CHECK-IN ───────────────────────────────────────────────────────
+let currentMood='neutral';
+function setMood(el){ document.querySelectorAll('.mood-opt').forEach(m=>m.classList.remove('on')); el.classList.add('on'); currentMood=el.dataset.m; }
+
+async function submitCheckin(){
+  const data={
+    user_id:uid(),
+    sleep_hours:parseFloat(document.getElementById('ci-sleep').value)||7,
+    sleep_quality:parseInt(document.getElementById('ci-quality').value)||70,
+    energy_level:parseInt(document.getElementById('ci-energy').value)||70,
+    steps_today:parseInt(document.getElementById('ci-steps').value)||0,
+    breakfast_consumed:document.getElementById('ci-breakfast').value==='true',
+    hydration:document.getElementById('ci-hydration').value,
+    mood:currentMood,
+    notes:document.getElementById('ci-notes').value
+  };
+  try{
+    await apiFetch('/health-checkin','POST',data);
+    document.getElementById('checkin-status').style.display='inline-flex';
+    document.getElementById('dot-health').className='int-dot connected';
+    toast('Check-in saved! OMNIX will use real data today.','success');
+    setTimeout(runLoop,500);
+  } catch{ toast('Saved locally — backend offline','info'); }
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────────────
+function saveSettings(){
+  const url=document.getElementById('set-url').value.trim();
+  const gem=document.getElementById('set-gem').value.trim();
+  if(url){ S.backendUrl=url; localStorage.setItem('omnix_url',url); }
+  if(gem){ S.geminiKey=gem; localStorage.setItem('omnix_gem',gem); }
+  toast('Settings saved!','success');
+}
+
+async function resetMem(){
+  try{ await apiFetch('/memory/reset','POST'); toast('Memory reset','success'); } catch{ toast('Backend offline','error'); }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────
+function uid(){ return S.user?.id||'demo-user'; }
+
+async function apiFetch(path, method='GET', body=null){
+  const opts={ method, headers:{'Content-Type':'application/json'}, signal:AbortSignal.timeout(20000) };
+  if(body) opts.body=JSON.stringify(body);
+  const r=await fetch(S.backendUrl+path, opts);
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+function toast(msg, type='info'){
+  const wrap=document.getElementById('toasts');
+  const el=document.createElement('div');
+  el.className='toast-item '+type;
+  el.innerHTML=`<span>${type==='success'?'✅':type==='error'?'❌':'💡'}</span><span>${msg}</span>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(16px)'; setTimeout(()=>el.remove(),300); },3000);
+}
+</script>
+</body>
+</html>

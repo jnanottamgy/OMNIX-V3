@@ -1,0 +1,27 @@
+{
+  "date": "2025-01-15",
+  "sleep": {
+    "duration_hours": 5.2,
+    "quality_score": 42,
+    "deep_sleep_pct": 18,
+    "rem_sleep_pct": 14,
+    "interruptions": 3,
+    "wakeup_time": "08:47"
+  },
+  "current_vitals": {
+    "heart_rate_resting": 74,
+    "hrv": 38,
+    "stress_indicator": "HIGH",
+    "energy_estimate": 35
+  },
+  "nutrition": {
+    "breakfast_consumed": false,
+    "last_meal": "yesterday_dinner",
+    "hydration_level": "LOW"
+  },
+  "activity": {
+    "steps_today": 312,
+    "calories_burned": 80,
+    "sedentary_minutes": 42
+  }
+}
